@@ -23,3 +23,6 @@ class Documents(models.Model):
     plagarism=models.FloatField(default=0.0)
     topic=models.CharField(default='chap1',max_length=100)
     uploadtime=models.TimeField(auto_now_add=True)
+    
+class pdfdoc(models.Model):
+    userid=models.ForeignKey(Studetails,on_delete=models.CASCADE)
