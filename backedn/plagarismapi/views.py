@@ -26,7 +26,7 @@ def wordplagariser(file1,file2):
         
 MEDIA_ROOT=BASE_DIR/'media'  
    
-def get_media_files(topic):
+def get_media_files(topic,type):
     media_files = []
     checkdir=False
     index=0
@@ -54,7 +54,7 @@ def get_media_files(topic):
 def do_something(sender, instance, **kwargs):
     scoreindex=[]
     if instance.docname:
-        File_List=get_media_files(instance.topic)
+        File_List=get_media_files(instance.topic,'worddocument')
         setfile=str(instance.docname).split('/')
         setfilenew="\\".join(setfile)
         print(setfilenew)

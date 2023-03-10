@@ -15,7 +15,7 @@ class Teacherdetails(models.Model):
     password=models.CharField(max_length=100)
     
 def get_upload_path(instance, filename):
-    return os.path.join(instance.topic, filename)
+    return os.path.join('worddocument',instance.topic, filename)
 
 class Documents(models.Model):
     userid=models.ForeignKey(Studetails,on_delete=models.CASCADE)
