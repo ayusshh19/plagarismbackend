@@ -70,8 +70,11 @@ def do_something(sender, instance, **kwargs):
                 result=wordplagariser(filename,item)
                 scoreindex.append(result)
         try:
-          success=Documents.objects.filter(id=instance.id).update(plagarism=max(scoreindex))
-          print(scoreindex)
-          print(f'success {success}')
-        except:
+          if len(scoreindex)>0:
+              print(Documents.objects.filter(id=instance.id))
+              success=Documents.objects.filter(id=instance.id).update(plagarism=max(scoreindex))
+              print(success)
+              print(scoreindex)
+              print(f'success {success}')
+        except :
           print('An exception occurred')
