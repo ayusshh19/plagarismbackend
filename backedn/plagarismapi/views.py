@@ -56,12 +56,15 @@ def do_something(sender, instance, **kwargs):
     if instance.docname:
         File_List=get_media_files(instance.topic)
         setfile=str(instance.docname).split('/')
-        setfilenew=setfile.join('\\')
+        setfilenew="\\".join(setfile)
         print(setfilenew)
+        # print(setfilenew)
+        # print(setfile)
         filename=os.path.join(MEDIA_ROOT, str(setfilenew))
         for item in File_List:
             print(f'item {item} filename {filename} is equeal {item==filename}')
-            if item is filename:
+            if item == filename:
+                scoreindex.append(0)
                 continue
             else:
                 result=wordplagariser(filename,item)
