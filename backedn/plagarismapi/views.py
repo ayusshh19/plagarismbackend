@@ -117,15 +117,21 @@ def wordtotext(request):
 def extract_text_from_pdf(request):
     if request.method=='POST':
         # Get the uploaded file from the request object
-        uploaded_file = request.FILES.getlist('document')
-
+        uploaded_file1 = request.FILES.getlist('document')[0]
+        uploaded_file2 = request.FILES.getlist('document')[1]
         # Load the file into a PyPDF2.PdfFileReader object
-        pdf_reader = PyPDF2.PdfFileReader(BytesIO(uploaded_file.read()))
+        pdf_reader1 = PyPDF2.PdfReader(BytesIO(uploaded_file1.read()))
+        pdf_reader2 = PyPDF2.PdfReader(BytesIO(uploaded_file2.read()))
+        
 
         # Extract the text from each page of the PDF file
-        text = ''
-        for i in range(pdf_reader.getNumPages()):
-            text += pdf_reader.getPage(i).extractText()
-
+        text1 = ''
+        text2 = ''
+        for i in range(len(pdf_reader1.pages)):
+            text1 += pdf_reader1.pages[i].extract_text()
+        print(text1)
+        for i in range(len(pdf_reader2.pages)):
+            text2 += pdf_reader1.pages[i].extract_text()
+        similarity=SequenceMatcher(None,text1,text2).ratio()
         return Response({'msg':'my post request','Score':similarity*100},status=status.HTTP_200_OK)
     return Response({'msg':'get request'},status=status.HTTP_200_OK)
