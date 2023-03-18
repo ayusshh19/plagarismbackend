@@ -7,12 +7,13 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Documents
 import os
+from PIL import Image
 from pathlib import Path
-
+import pytesseract
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Create your views here.
-
+pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files (x86)\\Tesseract-OCR\\tesseract.exe'
 @api_view(['GET','POST'])
 def home(request):
     return Response({'msg':'hello user this is our plagarism'},status=status.HTTP_200_OK)
@@ -58,8 +59,6 @@ def do_something(sender, instance, **kwargs):
         setfile=str(instance.docname).split('/')
         setfilenew="\\".join(setfile)
         print(setfilenew)
-        # print(setfilenew)
-        # print(setfile)
         filename=os.path.join(MEDIA_ROOT, str(setfilenew))
         for item in File_List:
             print(f'item {item} filename {filename} is equeal {item==filename}')
@@ -78,3 +77,31 @@ def do_something(sender, instance, **kwargs):
               print(f'success {success}')
         except :
           print('An exception occurred')
+          
+@api_view(['GET','POST'])
+def process_image(request):
+    if request.method == 'POST':
+        print(request.data)
+        images = request.FILES.getlist('images')
+        imagetextlist=[]
+        for image in images:
+            image = Image.open(image)
+            text = pytesseract.image_to_string(image)
+            imagetextlist.append(text)
+        similarity=SequenceMatcher(None,imagetextlist[0],imagetextlist[1]).ratio()
+        return Response({'msg':'my post request','Score':similarity*100},status=status.HTTP_200_OK)
+    return Response({'msg':'get request'},status=status.HTTP_200_OK)
+
+@api_view(['GET','POST'])
+def wordtotext(request):
+    if request.method == 'POST':
+        print(request.data)
+        worddoc = request.FILES.getlist('worddocuments')
+        wordlist=[]
+        for word in worddoc:
+            image = Image.open(image)
+            text = pytesseract.image_to_string(image)
+            wordlist.append(text)
+        similarity=SequenceMatcher(None,wordlist[0],wordlist[1]).ratio()
+        return Response({'msg':'my post request','Score':similarity*100},status=status.HTTP_200_OK)
+    return Response({'msg':'get request'},status=status.HTTP_200_OK)

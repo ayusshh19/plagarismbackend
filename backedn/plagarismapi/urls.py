@@ -1,10 +1,11 @@
 from django.urls import path,include
-from .views import home
+from .views import home,process_image
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('',home,name='Myhome'),
+    path('imgtotext/',process_image,name='imagetotext')
 ]
 
 if settings.DEBUG:
