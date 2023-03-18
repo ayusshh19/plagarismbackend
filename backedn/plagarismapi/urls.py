@@ -1,5 +1,5 @@
 from django.urls import path,include
-from .views import home,process_image,wordtotext,extract_text_from_pdf,imagefeature
+from .views import home,process_image,wordtotext,extract_text_from_pdf,imagefeature,handwritten,normalhandwritten
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -9,6 +9,9 @@ urlpatterns = [
     path('wordtotext/',wordtotext,name='wordtotext'),
     path('pdftotext/',extract_text_from_pdf,name='extract_text_from_pdf'),
     path('imagefeature/',imagefeature,name='imagefeature'),
+    path('handwritten/',handwritten,name='handwritten'),
+    path('normal/',normalhandwritten,name='normal')
+    
     
     
     

@@ -16,7 +16,15 @@ import PyPDF2
 import docx
 from io import BytesIO
 import cv2
+import pytesseract
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
 import numpy as np
+from .cursive.image_straighten import image_straighten
+from .cursive.center_align import center_align
+from .cursive.segmentation import segmentation
+from .cursive.model_build import model_build
+from .cursive.recognition import recognition
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Create your views here.
@@ -146,53 +154,88 @@ def imagefeature(request):
         imagetextlist=[]
         for image in images:
             img_bytes = image.read()
-
-            # Convert the image to a NumPy array
             nparr = np.frombuffer(img_bytes, np.uint8)
 
-            # Decode the NumPy array as an image
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             imagetextlist.append(img)
         template_gray = cv2.cvtColor(imagetextlist[0], cv2.COLOR_BGR2GRAY)
         target_gray = cv2.cvtColor(imagetextlist[1], cv2.COLOR_BGR2GRAY)
 
-        # Detect keypoints and descriptors in both images
         sift = cv2.SIFT_create()
         kp1, des1 = sift.detectAndCompute(template_gray, None)
         kp2, des2 = sift.detectAndCompute(target_gray, None)
 
-        # Match keypoints between the two images
         bf = cv2.BFMatcher()
         matches = bf.match(des1, des2)
         matches = sorted(matches, key=lambda x: x.distance)
 
-        # Calculate the homography matrix using the matched keypoints
         src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
         M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
 
         h, w = template_gray.shape
         warped_template = cv2.warpPerspective(template_gray, M, (w, h))
-        # Ensure that both images have the same data type
+        
         if template_gray.dtype != target_gray.dtype:
             target_gray = target_gray.astype(template_gray.dtype)
             
         if template_gray.shape[0] > target_gray.shape[0] or template_gray.shape[1] > target_gray.shape[1]:
             template_gray = cv2.resize(template_gray, (target_gray.shape[1], target_gray.shape[0]))
 
-            
-            
-        # Compare the warped template image with the target image using a similarity metric
         similarity_metric = cv2.matchTemplate(target_gray,template_gray, cv2.TM_CCOEFF_NORMED)
         similarity_score = similarity_metric.max()
 
-        # Set similarity threshold
         threshold = 0.8
         print(f'similarity {similarity_score}')
-        # Compare the similarity score to the threshold
         if similarity_score >= threshold:
             print("Plagiarism detected!")
         else:
             print("No plagiarism detected.")
         return Response({'msg':'my post request','Score':similarity_score*100},status=status.HTTP_200_OK)
+    return Response({'msg':'get request'},status=status.HTTP_200_OK)
+
+build_model = 0 # Model already exists
+@api_view(['GET','POST'])
+def handwritten(request):
+    if request.method == 'POST':
+        print(request.data)
+        images = request.FILES.getlist('images')
+        imagetextlist=[]
+        for image in images:
+            img_bytes = image.read()
+            nparr = np.frombuffer(img_bytes, np.uint8)
+
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            imagetextlist.append(img)
+        result=[]
+        for img in imagetextlist:
+            image_straighten(img)
+            segmentation(img)
+            folder='plagarismapi/cursive/result/characters/'
+            center_align(folder)
+
+#            Fix model building and recognition later
+            if (build_model != 0):
+                model_build()
+            rec_char = []
+            rec_char = recognition()
+            result.append(rec_char)
+        print(result)
+        return Response({'msg':'my post request','Score':1*100},status=status.HTTP_200_OK)
+    return Response({'msg':'get request'},status=status.HTTP_200_OK)
+
+build_model = 0 # Model already exists
+@api_view(['GET','POST'])
+def normalhandwritten(request):
+    if request.method == 'POST':
+        print(request.data)
+        images = request.FILES.getlist('images')
+        imagetextlist=[]
+        for image in images:
+            image = Image.open(image)
+            text = pytesseract.image_to_string(image)
+            imagetextlist.append(text)
+            print(text)
+        similarity=SequenceMatcher(None,imagetextlist[0],imagetextlist[1]).ratio()
+        return Response({'msg':'my post request','Score':similarity*100},status=status.HTTP_200_OK)
     return Response({'msg':'get request'},status=status.HTTP_200_OK)
