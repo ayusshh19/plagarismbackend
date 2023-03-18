@@ -15,6 +15,8 @@ import pytesseract
 import PyPDF2
 import docx
 from io import BytesIO
+import cv2
+import numpy as np
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Create your views here.
@@ -134,4 +136,63 @@ def extract_text_from_pdf(request):
             text2 += pdf_reader1.pages[i].extract_text()
         similarity=SequenceMatcher(None,text1,text2).ratio()
         return Response({'msg':'my post request','Score':similarity*100},status=status.HTTP_200_OK)
+    return Response({'msg':'get request'},status=status.HTTP_200_OK)
+
+@api_view(['GET','POST'])
+def imagefeature(request):
+    if request.method == 'POST':
+        print(request.data)
+        images = request.FILES.getlist('images')
+        imagetextlist=[]
+        for image in images:
+            img_bytes = image.read()
+
+            # Convert the image to a NumPy array
+            nparr = np.frombuffer(img_bytes, np.uint8)
+
+            # Decode the NumPy array as an image
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            imagetextlist.append(img)
+        template_gray = cv2.cvtColor(imagetextlist[0], cv2.COLOR_BGR2GRAY)
+        target_gray = cv2.cvtColor(imagetextlist[1], cv2.COLOR_BGR2GRAY)
+
+        # Detect keypoints and descriptors in both images
+        sift = cv2.SIFT_create()
+        kp1, des1 = sift.detectAndCompute(template_gray, None)
+        kp2, des2 = sift.detectAndCompute(target_gray, None)
+
+        # Match keypoints between the two images
+        bf = cv2.BFMatcher()
+        matches = bf.match(des1, des2)
+        matches = sorted(matches, key=lambda x: x.distance)
+
+        # Calculate the homography matrix using the matched keypoints
+        src_pts = np.float32([kp1[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+        dst_pts = np.float32([kp2[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+
+        h, w = template_gray.shape
+        warped_template = cv2.warpPerspective(template_gray, M, (w, h))
+        # Ensure that both images have the same data type
+        if template_gray.dtype != target_gray.dtype:
+            target_gray = target_gray.astype(template_gray.dtype)
+            
+        if template_gray.shape[0] > target_gray.shape[0] or template_gray.shape[1] > target_gray.shape[1]:
+            template_gray = cv2.resize(template_gray, (target_gray.shape[1], target_gray.shape[0]))
+
+            
+            
+        # Compare the warped template image with the target image using a similarity metric
+        similarity_metric = cv2.matchTemplate(target_gray,template_gray, cv2.TM_CCOEFF_NORMED)
+        similarity_score = similarity_metric.max()
+
+        # Set similarity threshold
+        threshold = 0.8
+        print(f'similarity {similarity_score}')
+        # Compare the similarity score to the threshold
+        if similarity_score >= threshold:
+            print("Plagiarism detected!")
+        else:
+            print("No plagiarism detected.")
+        return Response({'msg':'my post request','Score':similarity_score*100},status=status.HTTP_200_OK)
     return Response({'msg':'get request'},status=status.HTTP_200_OK)
