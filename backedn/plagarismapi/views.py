@@ -8,8 +8,13 @@ from django.dispatch import receiver
 from .models import Documents
 import os
 from PIL import Image
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 from pathlib import Path
 import pytesseract
+import PyPDF2
+import docx
+from io import BytesIO
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Create your views here.
@@ -96,12 +101,31 @@ def process_image(request):
 def wordtotext(request):
     if request.method == 'POST':
         print(request.data)
-        worddoc = request.FILES.getlist('worddocuments')
-        wordlist=[]
-        for word in worddoc:
-            image = Image.open(image)
-            text = pytesseract.image_to_string(image)
-            wordlist.append(text)
-        similarity=SequenceMatcher(None,wordlist[0],wordlist[1]).ratio()
+        document1 = docx.Document(request.FILES.getlist('worddocuments')[0])
+        document2 = docx.Document(request.FILES.getlist('worddocuments')[1])
+        firstdoc=''
+        seconddoc=''
+        for paragraph in document1.paragraphs:
+            firstdoc+=paragraph.text
+        for paragraph in document2.paragraphs:
+            seconddoc+=paragraph.text
+        similarity=SequenceMatcher(None,firstdoc,seconddoc).ratio()
+        return Response({'msg':'my post request','Score':similarity*100},status=status.HTTP_200_OK)
+    return Response({'msg':'get request'},status=status.HTTP_200_OK)
+
+@api_view(['GET','POST'])
+def extract_text_from_pdf(request):
+    if request.method=='POST':
+        # Get the uploaded file from the request object
+        uploaded_file = request.FILES.getlist('document')
+
+        # Load the file into a PyPDF2.PdfFileReader object
+        pdf_reader = PyPDF2.PdfFileReader(BytesIO(uploaded_file.read()))
+
+        # Extract the text from each page of the PDF file
+        text = ''
+        for i in range(pdf_reader.getNumPages()):
+            text += pdf_reader.getPage(i).extractText()
+
         return Response({'msg':'my post request','Score':similarity*100},status=status.HTTP_200_OK)
     return Response({'msg':'get request'},status=status.HTTP_200_OK)
