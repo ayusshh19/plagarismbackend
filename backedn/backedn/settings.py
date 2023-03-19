@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'plagarismapi',
-    'rest_framework'
+    'rest_framework',
+    'pdfoperation'
 ]
 
 MIDDLEWARE = [

@@ -25,10 +25,9 @@ from .cursive.center_align import center_align
 from .cursive.segmentation import segmentation
 from .cursive.model_build import model_build
 from .cursive.recognition import recognition
-import subprocess
-import os.path
-import sys
-from shutil import copyfile
+
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Create your views here.
@@ -243,3 +242,4 @@ def normalhandwritten(request):
         similarity=SequenceMatcher(None,imagetextlist[0],imagetextlist[1]).ratio()
         return Response({'msg':'my post request','Score':similarity*100},status=status.HTTP_200_OK)
     return Response({'msg':'get request'},status=status.HTTP_200_OK)
+
