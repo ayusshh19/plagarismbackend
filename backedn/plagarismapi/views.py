@@ -25,6 +25,10 @@ from .cursive.center_align import center_align
 from .cursive.segmentation import segmentation
 from .cursive.model_build import model_build
 from .cursive.recognition import recognition
+import subprocess
+import os.path
+import sys
+from shutil import copyfile
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # Create your views here.
