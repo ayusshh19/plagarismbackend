@@ -12,6 +12,8 @@ import fitz
 import pdfplumber
 import docx
 import PyPDF2
+import zipfile
+from django.conf import settings
 from io import BytesIO
 import pytesseract  #install this on cpu before pip install,  also make sure folder for it is in (86)program file
 from PIL import Image 
@@ -19,7 +21,6 @@ import pathlib
 from pathlib import Path
 import fitz  #trying this instead of poppler
 import os
-import fnmatch
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -77,15 +78,15 @@ def getreference(request):
         references_dict=dict(references_dict)
         metadata=dict(metadata)
         print(references_dict,metadata,references_list)
-        return Response({'msg':'my post request','reference dict':references_dict,'reference metadata':metadata},status=status.HTTP_200_OK)
+        return Response({'msg':'my post request','referencedict':references_dict,'referencemetadata':metadata},status=status.HTTP_200_OK)
     return Response({'msg':'get request'},status=status.HTTP_200_OK)
     
 @api_view(['GET','POST'])    
 def mergepdf(request):
  if request.method=='POST':
              # Get the uploaded file from the request object
-        uploaded_file1 = request.FILES.getlist('document')[0]
-        uploaded_file2 = request.FILES.getlist('document')[1]
+        uploaded_file1 = request.FILES.getlist('files')[0]
+        uploaded_file2 = request.FILES.getlist('files')[1]
         # Load the file into a PyPDF2.PdfFileReader object
         pdf_reader1 = PyPDF2.PdfReader(BytesIO(uploaded_file1.read()))
         pdf_reader2 = PyPDF2.PdfReader(BytesIO(uploaded_file2.read()))
@@ -105,41 +106,76 @@ def mergepdf(request):
         return response
         # return Response({'msg':'my post request','pdf':merger},status=status.HTTP_200_OK)
  return Response({'msg':'get request'},status=status.HTTP_200_OK)
-    
+BASE_DIR = Path(__file__).resolve().parent.parent
 @api_view(['GET','POST'])  
 def extractimage(request):
     if request.method=='POST':
             # file path you want to extract images from
         file = "C:\\Users\\AYUSH SHUKLA\\Desktop\\optimizedhtr\\pdfoperation\\PDF_Published.pdf"
+        uploaded_file1 = request.FILES['files']
+        if not uploaded_file1 or uploaded_file1.size == 0:
+            return HttpResponse('PDF file is empty', status=400)
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            # Save uploaded file to temporary file on server
+            for chunk in uploaded_file1.chunks():
+                temp_file.write(chunk)
+        try:
+            # Open PDF file using fitz
+            content=''
+            imglist=[]
+            with fitz.open(temp_file.name) as doc:
+                # iterate over PDF pages
+                for page_index in range(len(doc)):
 
-        # open the file
-        pdf_file = fitz.open(file)
+                    # get the page itself
+                    page = doc[page_index]
+                    image_list = page.get_images()
 
-        # iterate over PDF pages
-        for page_index in range(len(pdf_file)):
+                    # printing number of images found in this page
+                    if image_list:
+                        print(f"[+] Found a total of {len(image_list)} images in page {page_index}")
+                    else:
+                        print("[!] No images found on page", page_index)
+                    for image_index, img in enumerate(page.get_images(), start=1):
+                        # get the XREF of the image
+                        xref = img[0]
 
-            # get the page itself
-            page = pdf_file[page_index]
-            image_list = page.get_images()
+                        # extract the image bytes
+                        base_image = doc.extract_image(xref)
+                        image_bytes = base_image["image"]
 
-            # printing number of images found in this page
-            if image_list:
-                print(f"[+] Found a total of {len(image_list)} images in page {page_index}")
-            else:
-                print("[!] No images found on page", page_index)
-            for image_index, img in enumerate(page.get_images(), start=1):
-                # get the XREF of the image
-                xref = img[0]
+                        # get the image extension
+                        image_ext = base_image["ext"]
 
-                # extract the image bytes
-                base_image = pdf_file.extract_image(xref)
-                image_bytes = base_image["image"]
+                        img = Image.open(io.BytesIO(image_bytes))
+                        img.save(open(f"image{page_index + 1}_{image_index}.{image_ext}", "wb")) 
+        except (OSError, ValueError) as e:
+            print(f"Error opening PDF file: {e}")
+        finally:
+            # Delete temporary file
+            os.unlink(temp_file.name)
+        # Create a Django HTTP response containing the image
+        zip_filename = 'images.zip'
+        zip_path = os.path.join(settings.MEDIA_ROOT, zip_filename)
+        with zipfile.ZipFile(zip_path, 'w') as zip_file:
+            for image_filename in image_list:
+                image_path = os.path.join(BASE_DIR, image_filename)
+                zip_file.write(image_path, arcname=image_filename)
+    
+        # Read the zip archive into memory and delete the file from disk
+        with open(zip_path, 'rb') as zip_file:
+            zip_content = zip_file.read()
+        os.remove(zip_path)
+    
+        # Create the HTTP response
+        response = HttpResponse(zip_content, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+        return response
+        return Response({'msg':'my post request','pdf':merger},status=status.HTTP_200_OK)
+    return Response({'msg':'get request'},status=status.HTTP_200_OK)
+        
 
-                # get the image extension
-                image_ext = base_image["ext"]
-
-                img = Image.open(io.BytesIO(image_bytes))
-                img.save(open(f"image{page_index + 1}_{image_index}.{image_ext}", "wb"))    
+           
 
 @api_view(['GET','POST'])
 def pdftoword(request):
@@ -175,7 +211,7 @@ scanned_pdf = working_directory / 'plagarisimdetectionofimages.pdf'
 @api_view(['GET','POST'])
 def scannedpdf(request):
     if request.method=='POST':
-        uploaded_file1 = request.FILES['document']
+        uploaded_file1 = request.FILES['files']
         # Load the file into a PyPDF2.PdfFileReader object
         pdf_reader1 = PyPDF2.PdfReader(BytesIO(uploaded_file1.read()))
         if not uploaded_file1 or uploaded_file1.size == 0:

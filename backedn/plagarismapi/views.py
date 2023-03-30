@@ -100,7 +100,7 @@ def do_something(sender, instance, **kwargs):
 def process_image(request):
     if request.method == 'POST':
         print(request.data)
-        images = request.FILES.getlist('images')
+        images = request.FILES.getlist('files')
         imagetextlist=[]
         for image in images:
             image = Image.open(image)
@@ -114,8 +114,8 @@ def process_image(request):
 def wordtotext(request):
     if request.method == 'POST':
         print(request.data)
-        document1 = docx.Document(request.FILES.getlist('worddocuments')[0])
-        document2 = docx.Document(request.FILES.getlist('worddocuments')[1])
+        document1 = docx.Document(request.FILES.getlist('files')[0])
+        document2 = docx.Document(request.FILES.getlist('files')[1])
         firstdoc=''
         seconddoc=''
         for paragraph in document1.paragraphs:
@@ -130,8 +130,8 @@ def wordtotext(request):
 def extract_text_from_pdf(request):
     if request.method=='POST':
         # Get the uploaded file from the request object
-        uploaded_file1 = request.FILES.getlist('document')[0]
-        uploaded_file2 = request.FILES.getlist('document')[1]
+        uploaded_file1 = request.FILES.getlist('files')[0]
+        uploaded_file2 = request.FILES.getlist('files')[1]
         # Load the file into a PyPDF2.PdfFileReader object
         pdf_reader1 = PyPDF2.PdfReader(BytesIO(uploaded_file1.read()))
         pdf_reader2 = PyPDF2.PdfReader(BytesIO(uploaded_file2.read()))
@@ -153,7 +153,7 @@ def extract_text_from_pdf(request):
 def imagefeature(request):
     if request.method == 'POST':
         print(request.data)
-        images = request.FILES.getlist('images')
+        images = request.FILES.getlist('files')
         imagetextlist=[]
         for image in images:
             img_bytes = image.read()
@@ -202,7 +202,7 @@ build_model = 0 # Model already exists
 def handwritten(request):
     if request.method == 'POST':
         print(request.data)
-        images = request.FILES.getlist('images')
+        images = request.FILES.getlist('files')
         imagetextlist=[]
         for image in images:
             img_bytes = image.read()
@@ -232,7 +232,7 @@ build_model = 0 # Model already exists
 def normalhandwritten(request):
     if request.method == 'POST':
         print(request.data)
-        images = request.FILES.getlist('images')
+        images = request.FILES.getlist('files')
         imagetextlist=[]
         for image in images:
             image = Image.open(image)
