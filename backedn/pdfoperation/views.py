@@ -107,11 +107,11 @@ def mergepdf(request):
         # return Response({'msg':'my post request','pdf':merger},status=status.HTTP_200_OK)
  return Response({'msg':'get request'},status=status.HTTP_200_OK)
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
 @api_view(['GET','POST'])  
 def extractimage(request):
     if request.method=='POST':
-            # file path you want to extract images from
-        file = "C:\\Users\\AYUSH SHUKLA\\Desktop\\optimizedhtr\\pdfoperation\\PDF_Published.pdf"
         uploaded_file1 = request.FILES['files']
         if not uploaded_file1 or uploaded_file1.size == 0:
             return HttpResponse('PDF file is empty', status=400)
@@ -121,8 +121,6 @@ def extractimage(request):
                 temp_file.write(chunk)
         try:
             # Open PDF file using fitz
-            content=''
-            imglist=[]
             with fitz.open(temp_file.name) as doc:
                 # iterate over PDF pages
                 for page_index in range(len(doc)):
@@ -140,7 +138,7 @@ def extractimage(request):
                         # get the XREF of the image
                         xref = img[0]
 
-                        # extract the image bytes
+                        # extract the image bytes   
                         base_image = doc.extract_image(xref)
                         image_bytes = base_image["image"]
 
@@ -158,10 +156,17 @@ def extractimage(request):
         zip_filename = 'images.zip'
         zip_path = os.path.join(settings.MEDIA_ROOT, zip_filename)
         with zipfile.ZipFile(zip_path, 'w') as zip_file:
-            for image_filename in image_list:
-                image_path = os.path.join(BASE_DIR, image_filename)
-                zip_file.write(image_path, arcname=image_filename)
-    
+            for dirpath, dirnames, filenames in os.walk(BASE_DIR):
+                count=0
+                for filename in filenames:
+                    if filename.lower().endswith('.jpeg') or filename.lower().endswith('.jpg') or filename.lower().endswith('.png'):
+                        file_path = os.path.join(dirpath, filename)
+                        zip_file.write(file_path,arcname=os.path.relpath(file_path, BASE_DIR))
+                        count+=1
+                        if(count>12):
+                            break
+                break
+
         # Read the zip archive into memory and delete the file from disk
         with open(zip_path, 'rb') as zip_file:
             zip_content = zip_file.read()
