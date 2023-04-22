@@ -49,8 +49,8 @@ def wordSegment(textLines):
         th, threshed = cv.threshold(gray, 100, 255, cv.THRESH_BINARY_INV|cv.THRESH_OTSU)
         final_thr = cv.dilate(threshed,None,iterations = 20)
 
-        plt.imshow(final_thr)
-        plt.show()
+        # plt.imshow(final_thr)
+        # plt.show()
         
         contours, hierarchy = cv.findContours(final_thr,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
         boundingBoxes = [cv.boundingRect(c) for c in contours]
@@ -178,8 +178,8 @@ def baselines(letter2, upoints, dpoints, h, w):
         lb = meand
         cv.line(letter2,(0,meand),(w,meand),(255,0,0),2)
         
-    plt.imshow(letter2)
-    plt.show()
+    # plt.imshow(letter2)
+    # plt.show()
     return meanu, lb
 ##******************************************************************************###
 
@@ -188,13 +188,13 @@ def baselines(letter2, upoints, dpoints, h, w):
 def histogram(letter2, upper_baseline, lower_baseline, w):
     ##------------Making Histograms (Default)------------------------######
     cropped = letter2[upper_baseline:lower_baseline,0:w]
-    plt.imshow(cropped)
-    plt.show()
+    # plt.imshow(cropped)
+    # plt.show()
     colcnt = np.sum(cropped==255, axis=0)
     x = list(range(len(colcnt)))
     plt.plot(colcnt)
     plt.fill_between(x, colcnt, 1, facecolor='blue', alpha=0.5)
-    plt.show()  
+    # plt.show()  
     return colcnt     
 ####---------------------------------------------------------------------------#####
 
@@ -251,8 +251,8 @@ def visualize(letterGray, letter2, upper_baseline, lower_baseline, colcnt, min_p
         letter3 = cv.line(letter2,(seg[i],0),(seg[i],h),(255,0,0),2)
     
     print("Does it work::::")
-    plt.imshow(letter3)
-    plt.show()
+    # plt.imshow(letter3)
+    # plt.show()
     return seg 
 ###---------------------------------------------------------------------------#####  
 
@@ -268,8 +268,8 @@ def segmentCharacters(seg,lettergray):
                 wordImg = lettergray[0:,0:s]
                 cntx=np.count_nonzero(wordImg == 255) 
                 print ('count',cntx)
-                plt.imshow(wordImg)
-                plt.show()
+                # plt.imshow(wordImg)
+                # plt.show()
                 fn=fn+1
             else:
                 continue
@@ -278,8 +278,8 @@ def segmentCharacters(seg,lettergray):
                 wordImg = lettergray[0:,s:seg[i]]
                 cntx=np.count_nonzero(wordImg == 255) 
                 print ('count',cntx)
-                plt.imshow(wordImg)
-                plt.show()
+                # plt.imshow(wordImg)
+                # plt.show()
                 fn=fn+1
                 s=seg[i]
             else:
@@ -288,8 +288,8 @@ def segmentCharacters(seg,lettergray):
             wordImg = lettergray[0:,seg[len(seg)-1]:]
             cntx=np.count_nonzero(wordImg == 255) 
             print ('count',cntx)
-            plt.imshow(wordImg)
-            plt.show()
+            # plt.imshow(wordImg)
+            # plt.show()
             fn=fn+1
         wordImgList.append(wordImg)
 
@@ -347,8 +347,8 @@ def segmentation(img):
     ###---------------------------------------------------------------------------#####        
             
         print('Original Image')         
-        plt.imshow(img)
-        plt.show()
+        # plt.imshow(img)
+        # plt.show()
     
     except Exception as e:
         print ('Error Message ',e)

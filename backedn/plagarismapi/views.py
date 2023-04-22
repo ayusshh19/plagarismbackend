@@ -224,7 +224,8 @@ def handwritten(request):
             rec_char = recognition()
             result.append(rec_char)
         print(result)
-        return Response({'msg':'my post request','Score':1*100},status=status.HTTP_200_OK)
+        score =len(result[0])/len(result[1])
+        return Response({'msg':'my post request','Score':score*100},status=status.HTTP_200_OK)
     return Response({'msg':'get request'},status=status.HTTP_200_OK)
 
 build_model = 0 # Model already exists

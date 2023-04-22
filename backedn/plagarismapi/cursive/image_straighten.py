@@ -44,8 +44,8 @@ def unshear(img):
     gray = img
     thresh = img.copy()
     #print(thresh)
-    plt.imshow(thresh)
-    plt.show()
+    # plt.imshow(thresh)
+    # plt.show()
     trans = thresh.transpose()
 
     arr=[]
@@ -154,15 +154,15 @@ def image_straighten(img):
         thresh = cv2.threshold(img,127,255,1)[1]
         thresh=np.pad(thresh, 100, pad_with, padder=0)
     
-        plt.imshow(thresh)
-        plt.show()
+        # plt.imshow(thresh)
+        # plt.show()
         deskew(thresh)
         sheared_img = unshear(thresh)
         
         ret, thresh = cv2.threshold(sheared_img,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
         
-        plt.imshow(thresh)
-        plt.show()
+        # plt.imshow(thresh)
+        # plt.show()
         cv2.imwrite('plagarismapi/cursive/result/data/c.png', thresh)
     #else:
     #    print("shear code: 2.34")
